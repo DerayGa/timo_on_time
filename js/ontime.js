@@ -3,74 +3,61 @@ const timoUrl = 'actions/zeiterfassung_industrie/zeiterfassung_industrie_action.
 const tableIframeSrc = 'zeiterfassung_low.jsp'
 const startWorkImg = '../../images/kommen.gif';
 const endWorkImg = '../../images/gehen.gif';
-//const endWorkImg = '../../images/kommen_gehen_grau.gif';
+const greyImg = '../../images/kommen_gehen_grau.gif';
 
 let retry = 30;
-const timer = 500;
+const timer = 300;
+let timoIframe;
 
-let MODE = 'start'; //'end'
 $(document).ready(() => {
-  console.log('TimO on time activated');
+  console.log('TimO - on time activated');
+
   getRootIframe()
-    .then((rootIframe) => {
-      if (rootIframe) {
-        return checkMode(rootIframe);
+    .then(() => {
+      if (timoIframe) {
+        return getTargetButon();
       }
-    }).then((values) => {
-      if (values.length) {
-        MODE = values[1];
-        hijack(values[0]);
-      }
-    })
+    }).then((targetButton) => {
+      hijack(targetButton);
+    });
 });
 
 function hijack(targetButton) {
-  if (!targetButton.length) return;
+  if (!targetButton) return;
 
-  const imgSrc = MODE === 'start' ? startWorkImg : endWorkImg;
-  const fakeButton = $(`<img src='${imgSrc}' alt='Timo on itme' title='Timo on time'>`);
-  $(fakeButton).insertAfter($(targetButton));
-  $(targetButton).hide();
+  let step = 1;
+  $(timoIframe).on('load', () => {
+    switch (step) {
+      case 1:
+        step = 2;
+        clickFromTimeTable();
+        break;
 
-  $(fakeButton).click(() => {
+      case 2:
+        step = 3;
+        adjustTimeAndSave();
+        break;
+
+      case 3:
+        step = 4;
+        leaveProcess('done');
+        $(timoIframe).attr('src', `${rootUrl}${timoUrl}?action=1`);
+        break;
+    }
+  });
+
+  $(targetButton).attr('title', 'Timo on time');
+  $(targetButton).click(() => {
     $('body').loading({
-      message: 'TimO - on time processing...'
+      onStart: function(loading) {
+        loading.overlay.slideDown(500);
+      },
+      onStop: function(loading) {
+        loading.overlay.slideUp(500);
+      },
+      message: 'TimO - on time processing...',
+      theme: 'dark'
     });
-    const shadowIframe = $('<iframe />', {
-      style: 'width:1px;height:1px',
-      src: `${timoUrl}?action=1`
-    })
-    let step = 1;
-    $(shadowIframe).load(() => {
-      switch (step) {
-        case 1:
-          console.log('step 1');
-          step = 2;
-          if (MODE === 'start') {
-            triggerStartWork(shadowIframe);
-          } else {
-            triggerEndWork(shadowIframe);
-          }
-          break;
-
-        case 2:
-          console.log('step 2');
-          step = 3;
-          clickFromTimeTable(shadowIframe);
-          break;
-
-        case 3:
-          console.log('step 3');
-          step = 4;
-          adjustTimeAndSave(shadowIframe);
-          break;
-
-        case 4:
-          location.reload();
-          break;
-      }
-    });
-    shadowIframe.appendTo('body');
   });
 }
 
@@ -80,13 +67,13 @@ function getRootIframe(resolve) {
       getRootIframe(resolve);
     });
   }
-  const rootIframe = $(`iframe[src="${timoUrl}?action=1"]`);
+  timoIframe = $(`iframe[src="${timoUrl}?action=1"]`);
   if (retry < 0) {
     resolve();
     return;
   }
-  if (rootIframe.length) {
-    resolve(rootIframe);
+  if (timoIframe.length) {
+    resolve();
   } else {
     setTimeout(function() {
       retry--;
@@ -95,39 +82,15 @@ function getRootIframe(resolve) {
   }
 }
 
-function checkMode(rootIframe, resolve) {
+function getTargetButon(resolve) {
   if (!resolve) {
     return new Promise((resolve) => {
-      checkMode(rootIframe, resolve);
+      getTargetButon(resolve);
     });
   }
-  const startWorkButton = $(`img[src="${startWorkImg}"]`, rootIframe.contents());
-  const endWorkButton = $(`img[src="${endWorkImg}"]`, rootIframe.contents());
-
-  if (retry < 0) {
-    resolve();
-    return;
-  }
-
-  if (startWorkButton.length) {
-    resolve([$(startWorkButton[0]), 'start']);
-  } else if (endWorkButton.length) {
-    resolve([$(endWorkButton[0]), 'end']);
-  } else {
-    setTimeout(function() {
-      retry--;
-      checkMode(rootIframe, resolve);
-    }, timer);
-  }
-}
-
-function getStartWorkButton(rootIframe, resolve) {
-  if (!resolve) {
-    return new Promise((resolve) => {
-      getStartWorkButton(rootIframe, resolve);
-    });
-  }
-  const startWorkButton = $(`img[src="${startWorkImg}"]`, rootIframe.contents());
+  const startWorkButton = $(`img[src="${startWorkImg}"]`, timoIframe.contents());
+  const endWorkButton = $(`img[src="${endWorkImg}"]`, timoIframe.contents());
+  const greyButton = $(`img[src="${greyImg}"]`, timoIframe.contents());
 
   if (retry < 0) {
     resolve();
@@ -136,44 +99,25 @@ function getStartWorkButton(rootIframe, resolve) {
 
   if (startWorkButton.length) {
     resolve($(startWorkButton[0]));
-  } else {
-    setTimeout(function() {
-      retry--;
-      getStartWorkButton(rootIframe, resolve);
-    }, timer);
-  }
-}
-
-function getEndWorkButton(rootIframe, resolve) {
-  if (!resolve) {
-    return new Promise((resolve) => {
-      getEndWorkButton(rootIframe, resolve);
-    });
-  }
-  const endWorkButton = $(`img[src="${endWorkImg}"]`, rootIframe.contents());
-
-  if (retry < 0) {
-    resolve();
-    return;
-  }
-
-  if (endWorkButton.length) {
+  } else if (endWorkButton.length) {
     resolve($(endWorkButton[0]));
+  } else if (greyButton.length) {
+    resolve();
   } else {
     setTimeout(function() {
       retry--;
-      getEndWorkButton(rootIframe, resolve);
+      getTargetButon(resolve);
     }, timer);
   }
 }
 
-function getTableIframe(rootIframe, resolve) {
+function getTableIframe(resolve) {
   if (!resolve) {
     return new Promise((resolve) => {
-      getTableIframe(rootIframe, resolve);
+      getTableIframe(resolve);
     });
   }
-  const tableIframe = $(`iframe`, rootIframe.contents());
+  const tableIframe = $(`iframe`, timoIframe.contents());
   if (retry < 0) {
     resolve();
     return;
@@ -183,30 +127,7 @@ function getTableIframe(rootIframe, resolve) {
   } else {
     setTimeout(function() {
       retry--;
-      getTableIframe(rootIframe, resolve);
-    }, timer);
-  }
-}
-
-function getTimeTable(rootIframe, resolve) {
-  if (!resolve) {
-    return new Promise((resolve) => {
-      getTimeTable(rootIframe, resolve);
-    });
-  }
-  const startWorkButton = $(`img[src="${startWorkImg}"]`, rootIframe.contents());
-
-  if (retry < 0) {
-    resolve();
-    return;
-  }
-
-  if (startWorkButton.length) {
-    resolve(startWorkButton);
-  } else {
-    setTimeout(function() {
-      retry--;
-      getTimeTable(rootIframe, resolve);
+      getTableIframe(resolve);
     }, timer);
   }
 }
@@ -220,8 +141,7 @@ function getTimeTableCell(tableIframe, resolve) {
   let timeCell = [];
   const tables = $('table', $(tableIframe).contents())
   if (tables.length) {
-    const timetable = tables[1];
-    const trs = $('tr', timetable);
+    const trs = $('tr', tables[1]);
 
     if (trs.length) {
       const tds = $('td', trs[1]);
@@ -246,81 +166,32 @@ function getTimeTableCell(tableIframe, resolve) {
   }
 }
 
-function getTimeInput(rootIframe, resolve) {
+function getTimeInputAndSaveButton(resolve) {
   if (!resolve) {
     return new Promise((resolve) => {
-      getTimeInput(rootIframe, resolve);
+      getTimeInputAndSaveButton(resolve);
     });
   }
-  const timeInput = $('input[type="text"][name="buchung_zeit"]', rootIframe.contents());
-
+  const timeInput = $('input[type="text"][name="buchung_zeit"]', timoIframe.contents());
+  const saveButton = $('input[type="button"]', timoIframe.contents());
   if (retry < 0) {
-    resolve();
+    resolve([]);
     return;
   }
 
-  if (timeInput.length) {
-    resolve(timeInput);
+  if (timeInput.length && saveButton.length) {
+    resolve([timeInput, saveButton]);
   } else {
     setTimeout(function() {
       retry--;
-      getTimeInput(rootIframe, resolve);
-    }, timer);
-  }
-}
-function getSaveButton(rootIframe, resolve) {
-  if (!resolve) {
-    return new Promise((resolve) => {
-      getSaveButton(rootIframe, resolve);
-    });
-  }
-  const saveButton = $('input[type="button"]', rootIframe.contents())
-
-  if (retry < 0) {
-    resolve();
-    return;
-  }
-
-  if (saveButton.length) {
-    resolve(saveButton);
-  } else {
-    setTimeout(function() {
-      retry--;
-      getSaveButton(rootIframe, resolve);
+      getTimeInputAndSaveButton(resolve);
     }, timer);
   }
 }
 
 // step 1
-function triggerStartWork(shadowIframe) {
-
-  getStartWorkButton(shadowIframe)
-    .then((targetButton) => {
-      if (targetButton) {
-        console.log('automatic click start work')
-        $(targetButton).trigger('click');
-      } else {
-        console.log('triggerStartWork not found');
-      }
-    });
-}
-
-// step 1
-function triggerEndWork(shadowIframe) {
-  getEndWorkButton(shadowIframe)
-    .then((targetButton) => {
-      if (targetButton) {
-        console.log('automatic click end work')
-        $(targetButton).trigger('click');
-      } else {
-        console.log('triggerEndWork not found');
-      }
-    });
-}
-
-// step 2
-function clickFromTimeTable(shadowIframe) {
-  getTableIframe(shadowIframe)
+function clickFromTimeTable() {
+  getTableIframe()
     .then((tableIframe) => {
       if (tableIframe) {
         return getTimeTableCell(tableIframe);
@@ -328,34 +199,36 @@ function clickFromTimeTable(shadowIframe) {
     })
     .then((timeCell) => {
       if (timeCell) {
-        const loadKGStr = $(timeCell).attr('onclick');
-        const id = loadKGStr.substring(loadKGStr.indexOf('(') + 1, loadKGStr.indexOf(')'))
-        console.log('automatic click edit time ', id)
-        $(shadowIframe).attr('src', `${rootUrl}${timoUrl}?action=21&arbeitstyp=5&buchung_id=${id}`);
+        const loadIdStr = $(timeCell).attr('onclick');
+        const id = loadIdStr.substring(loadIdStr.indexOf('(') + 1, loadIdStr.indexOf(')'));
+        $(timoIframe).attr('src', `${rootUrl}${timoUrl}?action=21&arbeitstyp=5&buchung_id=${id}`);
       } else {
-        console.log('clickFromTimeTable not found')
+        leaveProcess('error: timeCell not found');
       }
     });
 }
 
-// step 3
-function adjustTimeAndSave(shadowIframe) {
-  getTimeInput(shadowIframe)
-    .then((timeInput) => {
-      if (timeInput) {
+// step 2
+function adjustTimeAndSave() {
+  getTimeInputAndSaveButton()
+    .then(([timeInput, saveButton]) => {
+      if (timeInput && saveButton) {
         const now = new Date();
         $(timeInput).val(`${now.getHours()}:${now.getMinutes()}`);
-
-        getSaveButton(shadowIframe)
-          .then((saveButton) => {
-            if (saveButton) {
-              $(saveButton).trigger('click');
-            } else {
-              console.log('saveRecord not found');
-            }
-          });
+        $(saveButton).trigger('click');
       } else {
-        console.log('adjustTime not found');
+        leaveProcess('error: time input / save button not found');
       }
     });
+}
+
+function leaveProcess(message) {
+  $('div.loading-overlay-content').html(message);
+  $(timoIframe).off('load');
+  setTimeout(() => {
+    $('body').loading('stop');
+  }, 1000);
+  setTimeout(() => {
+    $('body').loading('destroy');
+  }, 2000);
 }
