@@ -18,35 +18,39 @@ $(document).ready(() => {
         return getTargetButon();
       }
     }).then((targetButton) => {
-      hijack(targetButton);
+      $(timoIframe).on('load', () => {
+        hijack(targetButton);
+      });
     });
 });
 
 function hijack(targetButton) {
   if (!targetButton) return;
 
+  let step = 1;
+  $(timoIframe).off('load');
+  $(timoIframe).on('load', () => {
+    switch (step) {
+      case 1:
+        step = 2;
+        clickFromTimeTable();
+        break;
+
+      case 2:
+        step = 3;
+        adjustTimeAndSave();
+        break;
+
+      case 3:
+        step = 4;
+        leaveProcess('done');
+        $(timoIframe).attr('src', `${rootUrl}${timoUrl}?action=1`);
+        break;
+    }
+  });
+
   $(targetButton).attr('title', 'Timo on time');
   $(targetButton).click(() => {
-    let step = 1;
-    $(timoIframe).on('load', () => {
-      switch (step) {
-        case 1:
-          step = 2;
-          clickFromTimeTable();
-          break;
-
-        case 2:
-          step = 3;
-          adjustTimeAndSave();
-          break;
-
-        case 3:
-          step = 4;
-          leaveProcess('done');
-          $(timoIframe).attr('src', `${rootUrl}${timoUrl}?action=1`);
-          break;
-      }
-    });
     $('body').loading({
       onStart: function(loading) {
         loading.overlay.slideDown(500);
