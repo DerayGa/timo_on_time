@@ -12,6 +12,10 @@ let step = 1;
 
 $(document).ready(() => {
   console.log('TimO - on time activated');
+  const date = new Date();
+  if (date.toLocaleString('en', { timeZone: "Europe/Berlin" }) == date.toLocaleString('en')) {
+    return;
+  }
 
   getRootIframe()
     .then(() => {
