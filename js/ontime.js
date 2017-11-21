@@ -11,11 +11,11 @@ let timoIframe;
 let step = 1;
 
 $(document).ready(() => {
-  console.log('TimO - on time activated');
   const date = new Date();
   if (date.toLocaleString('en', { timeZone: "Europe/Berlin" }) == date.toLocaleString('en')) {
     return;
   }
+  console.log('TimO - on time activated');
 
   getRootIframe()
     .then(() => {
@@ -35,6 +35,10 @@ function hijack(targetButton) {
   if (!targetButton) return;
 
   $(targetButton).attr('title', 'Timo on time');
+
+  const offset = $(timoIframe).offset() || { top : 0 };
+  const loadingGif = $(`<img src="${chrome.extension.getURL('assets/loading.gif')}" style="position:absolute;top:${offset.top}px;left:0;right:0;bottom:0;width:100%;height:100%">`);
+
   $(targetButton).click(() => {
     $(timoIframe).on('load', () => {
       switch (step) {
@@ -55,12 +59,17 @@ function hijack(targetButton) {
           break;
       }
     });
+
     $('body').loading({
       onStart: function(loading) {
-        loading.overlay.slideDown(500);
+        loading.overlay.slideDown(350);
+        setTimeout(() => {
+          $('body').append(loadingGif);
+        }, 350);
       },
       onStop: function(loading) {
-        loading.overlay.slideUp(500);
+        loading.overlay.slideUp(350);
+        $(loadingGif).remove();
       },
       message: 'TimO - on time processing...',
       theme: 'dark',
