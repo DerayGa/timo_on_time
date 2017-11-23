@@ -37,7 +37,7 @@ function hijack(targetButton) {
   $(targetButton).attr('title', 'Timo on time');
 
   const offset = $(timoIframe).offset() || { top : 0 };
-  const loadingGif = $(`<img src="${chrome.extension.getURL('assets/loading.gif')}" style="position:absolute;top:${offset.top}px;left:0;right:0;bottom:0;width:100%;height:100%">`);
+  const loadingGif = $(`<img style="position:absolute;top:${offset.top}px;left:0;right:0;bottom:0;width:100%;height:100%">`);
 
   $(targetButton).click(() => {
     $(timoIframe).on('load', () => {
@@ -62,13 +62,12 @@ function hijack(targetButton) {
 
     $('body').loading({
       onStart: function(loading) {
-        loading.overlay.slideDown(350);
-        setTimeout(() => {
-          $('body').append(loadingGif);
-        }, 350);
+        loading.overlay.fadeIn(150);
+        $(loadingGif).attr('src', chrome.extension.getURL('assets/loading.gif'));
+        $('body').append(loadingGif);
       },
       onStop: function(loading) {
-        loading.overlay.slideUp(350);
+        loading.overlay.fadeOut(350);
         $(loadingGif).remove();
       },
       message: 'TimO - on time processing...',
