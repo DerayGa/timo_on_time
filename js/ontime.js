@@ -9,6 +9,7 @@ const timer = 100;
 let retry = 150;
 let timoIframe;
 let step = 1;
+let loadingGif;
 
 $(document).ready(() => {
   const date = new Date();
@@ -36,9 +37,6 @@ function hijack(targetButton) {
 
   $(targetButton).attr('title', 'Timo on time');
 
-  const offset = $(timoIframe).offset() || { top : 0 };
-  const loadingGif = $(`<img style="position:absolute;top:${offset.top}px;left:0;right:0;bottom:0;width:100%;height:100%">`);
-
   $(targetButton).click(() => {
     $(timoIframe).on('load', () => {
       switch (step) {
@@ -54,25 +52,16 @@ function hijack(targetButton) {
 
         case 3:
           step = 4;
-          leaveProcess('done');
+          leaveProcess('Done');
           $(timoIframe).attr('src', `${rootUrl}${timoUrl}?action=1`);
           break;
       }
     });
 
-    $('body').loading({
-      onStart: function(loading) {
-        loading.overlay.fadeIn(150);
-        $(loadingGif).attr('src', chrome.extension.getURL('assets/loading.gif'));
-        $('body').append(loadingGif);
-      },
-      onStop: function(loading) {
-        loading.overlay.fadeOut(350);
-        $(loadingGif).remove();
-      },
-      message: 'TimO - on time processing...',
-      theme: 'dark',
-    });
+    const offset = $(timoIframe).offset() || { top : 0 };
+    loadingGif = $(`<div class="ontime loading" style="top:${offset.top}px;"><img src=${chrome.extension.getURL('assets/loading.gif')}><span>TimO - on time processing...</span></div>`);
+    $('body').append(loadingGif);
+    $(loadingGif).fadeIn(1000);
   });
 }
 
@@ -238,12 +227,11 @@ function adjustTimeAndSave() {
 }
 
 function leaveProcess(message) {
-  $('div.loading-overlay-content').html(message);
   $(timoIframe).off('load');
+
+  $('span', loadingGif).html(message);
+  $(loadingGif).fadeOut(2000);
   setTimeout(() => {
-    $('body').loading('stop');
-  }, 1000);
-  setTimeout(() => {
-    $('body').loading('destroy');
-  }, 2000);
+    $(loadingGif).remove();
+  }, 2100);
 }

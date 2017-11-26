@@ -1,0 +1,30 @@
+div.ontime.loading {
+  position:absolute;
+  top:0px;
+  left:0;
+  right:0;
+  bottom:0;
+  background-color:#3e3a61;
+  display:none;
+}
+
+div.ontime.loading img{
+  position:absolute;
+  left:50%;
+  margin-left:-200px;
+  top:50%;
+  margin-top: -150px;
+  width:400px;
+  height:auto;
+}
+
+div.ontime.loading span{
+    position: absolute;
+    color: white;
+    left: 50%;
+    margin-left: -150px;
+    top: 50%;
+    width: 300px;
+    text-align: center;
+    margin-top: 120px;
+}

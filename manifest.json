@@ -3,7 +3,7 @@
 
   "name": "TimO - on time",
   "description": "Auto adjust TimO timezone issue",
-  "version": "1.5.2",
+  "version": "1.6.0",
   "content_security_policy": "script-src 'self' https://ajax.googleapis.com; object-src 'self'",
   "icons": {
     "16": "icons/icon16.png",
@@ -21,8 +21,8 @@
       "matches": [
         "*://*.meteocontrol.de/timo/*"
       ],
-      "js": ["js/jquery.min.js", "js/jquery.loading.min.js", "js/ontime.js"],
-      "css": ["css/jquery.loading.min.css"]
+      "js": ["js/jquery.min.js", "js/ontime.js"],
+      "css": ["css/ontime.css"]
     }
   ],
   "web_accessible_resources": ["assets/loading.gif"],
