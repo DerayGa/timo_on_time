@@ -10,6 +10,7 @@ let retry = 150;
 let timoIframe;
 let step = 1;
 let loadingGif;
+let progressBar;
 
 $(document).ready(() => {
   const date = new Date();
@@ -42,16 +43,19 @@ function hijack(targetButton) {
       switch (step) {
         case 1:
           step = 2;
+          progressBar.animate(0.25);
           clickFromTimeTable();
           break;
 
         case 2:
           step = 3;
+          progressBar.animate(0.7);
           adjustTimeAndSave();
           break;
 
         case 3:
           step = 4;
+          progressBar.animate(1.0);
           leaveProcess('Done');
           $(timoIframe).attr('src', `${rootUrl}${timoUrl}?action=1`);
           break;
@@ -59,9 +63,25 @@ function hijack(targetButton) {
     });
 
     const offset = $(timoIframe).offset() || { top : 0 };
-    loadingGif = $(`<div class="ontime loading" style="top:${offset.top}px;"><img src=${chrome.extension.getURL('assets/loading.gif')}><span>TimO - on time processing...</span></div>`);
+    loadingGif = $(`<div class="ontime loading" style="top:${offset.top}px;"><img src=${chrome.extension.getURL('assets/loading.gif')}><div id="progress" /></div>`);
     $('body').append(loadingGif);
-    $(loadingGif).fadeIn(1000);
+    $(loadingGif).fadeIn(500);
+    progressBar = new ProgressBar.Circle($('div#progress', loadingGif)[0], {
+      strokeWidth: 2,
+      easing: 'easeInOut',
+      duration: 750,
+      color: '#FE8341',
+      trailColor: '#3E3A61',
+      from: {color: '#3E3A61'},
+      to: {color: '#FE8341'},
+      step: (state, circle) => {
+        circle.path.setAttribute('stroke', state.color);
+      },
+      trailWidth: 1,
+      svgStyle: null
+    });
+
+    progressBar.animate(0.15);
   });
 }
 
@@ -198,11 +218,13 @@ function clickFromTimeTable() {
   getTableIframe()
     .then((tableIframe) => {
       if (tableIframe) {
+        progressBar.animate(0.35);
         return getTimeTableCell(tableIframe);
       }
     })
     .then((timeCell) => {
       if (timeCell) {
+        progressBar.animate(0.5);
         const loadIdStr = $(timeCell).attr('onclick');
         const id = loadIdStr.substring(loadIdStr.indexOf('(') + 1, loadIdStr.indexOf(')'));
         $(timoIframe).attr('src', `${rootUrl}${timoUrl}?action=21&arbeitstyp=5&buchung_id=${id}`);
@@ -217,6 +239,7 @@ function adjustTimeAndSave() {
   getTimeInputAndSaveButton()
     .then(([timeInput, saveButton]) => {
       if (timeInput && saveButton) {
+        progressBar.animate(0.85);
         const now = new Date();
         $(timeInput).val(`${now.getHours()}:${now.getMinutes()}`);
         $(saveButton).trigger('click');
@@ -229,7 +252,6 @@ function adjustTimeAndSave() {
 function leaveProcess(message) {
   $(timoIframe).off('load');
 
-  $('span', loadingGif).html(message);
   $(loadingGif).fadeOut(2000);
   setTimeout(() => {
     $(loadingGif).remove();
