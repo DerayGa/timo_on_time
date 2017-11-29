@@ -12,8 +12,73 @@ let step = 1;
 let loadingGif;
 let progressBar;
 
+const configs = [
+  {
+    src: 'loading1.gif',
+    backgroundColor: '#3E3A61',
+    progressColor: '#FE8341'
+  },
+  {
+    src: 'loading2.gif',
+    backgroundColor: '#03AEEF',
+    progressColor: '#111111'
+  },
+  {
+    src: 'loading3.gif',
+    backgroundColor: '#F5D02A',
+    progressColor: '#BC9557'
+  },
+  {
+    src: 'loading4.gif',
+    backgroundColor: '#B5FFF5',
+    progressColor: '#008D35'
+  },
+  {
+    src: 'loading5.gif',
+    backgroundColor: '#58A5A3',
+    progressColor: '#F68634'
+  },
+  {
+    src: 'loading6.gif',
+    backgroundColor: '#7120E5',
+    progressColor: '#FFFFFF'
+  },
+  {
+    src: 'loading7.gif',
+    backgroundColor: '#C3E751',
+    progressColor: '#65BA41'
+  },
+  {
+    src: 'loading8.gif',
+    backgroundColor: '#01DAE0',
+    progressColor: '#FFFFFF'
+  },
+  {
+    src: 'loading9.gif',
+    backgroundColor: '#CFD8DC',
+    progressColor: '#FFFFFF'
+  },
+  {
+    src: 'loading0.gif',
+    backgroundColor: '#02AADC',
+    progressColor: '#668EAA'
+  }
+];
+const date = new Date();
+let id = (date.getDay()) - 1; // monday -> 0
+if (date.getHours() > 12) {
+  id += 5;
+  if (id > 9) {
+    id -= 9;
+  }
+}
+if (id < 0) {
+  id += 9;
+}
+const loadingConfig = configs[id];
+loadingConfig.src = chrome.extension.getURL('assets/' + loadingConfig.src);
+
 $(document).ready(() => {
-  const date = new Date();
   if (date.toLocaleString('en', { timeZone: "Europe/Berlin" }) == date.toLocaleString('en')) {
     return;
   }
@@ -62,27 +127,30 @@ function hijack(targetButton) {
       }
     });
 
+    showLoading();
+    progressBar.animate(0.15);
+  });
+}
+
+function showLoading() {
     const offset = $(timoIframe).offset() || { top : 0 };
-    loadingGif = $(`<div class="ontime loading" style="top:${offset.top}px;"><img src=${chrome.extension.getURL('assets/loading.gif')}><div id="progress" /></div>`);
+    loadingGif = $(`<div class="ontime loading" style="top:${offset.top}px;background-color:${loadingConfig.backgroundColor}"><img src=${loadingConfig.src}><div id="progress" /></div>`);
     $('body').append(loadingGif);
     $(loadingGif).fadeIn(500);
     progressBar = new ProgressBar.Circle($('div#progress', loadingGif)[0], {
       strokeWidth: 2,
       easing: 'easeInOut',
       duration: 750,
-      color: '#FE8341',
-      trailColor: '#3E3A61',
-      from: {color: '#3E3A61'},
-      to: {color: '#FE8341'},
+      color: loadingConfig.progressColor,
+      trailColor: loadingConfig.backgroundColor,
+      from: {color: loadingConfig.backgroundColor},
+      to: {color: loadingConfig.progressColor},
       step: (state, circle) => {
         circle.path.setAttribute('stroke', state.color);
       },
       trailWidth: 1,
       svgStyle: null
     });
-
-    progressBar.animate(0.15);
-  });
 }
 
 function getRootIframe(resolve) {

@@ -1,27 +1,27 @@
 div.ontime.loading {
-  position:absolute;
-  top:0px;
-  left:0;
-  right:0;
-  bottom:0;
-  background-color:#3E3A61;
-  display:none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: white;
+  display: none;
 }
 
 div.ontime.loading img{
-  position:absolute;
-  left:50%;
-  margin-left:-200px;
-  top:50%;
+  position: absolute;
+  left: 50%;
+  margin-left: -200px;
+  top: 50%;
   margin-top: -150px;
-  width:400px;
-  height:auto;
+  width: 400px;
+  height: auto;
 }
 div.ontime.loading div#progress {
   position: absolute;
-  left:50%;
-  top:50%;
-  margin-left:-220px;
+  left: 50%;
+  top: 50%;
+  margin-left: -220px;
   margin-top: -220px;
   width: 440px;
   height: 440px;
