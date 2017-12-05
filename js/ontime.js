@@ -236,7 +236,17 @@ function getTimeTableCell(tableIframe, resolve) {
     const trs = $('tr', tables[1]);
 
     if (trs.length) {
-      const tds = $('td', trs[1]);
+      let targetRow = 1;
+      let tds;
+      const todayStr = formatDate(new Date());
+      for (let i = 1 ; i < trs.length ; i++) {
+        tds = $('td', trs[i]);
+        if ($(tds[1]).html().indexOf(todayStr) >= 0) {
+          targetRow = i;
+          break;
+        }
+      }
+      tds = $('td', trs[targetRow]);
 
       if (tds.length) {
         timeCell = $('a', tds[2]);
@@ -256,6 +266,14 @@ function getTimeTableCell(tableIframe, resolve) {
       getTimeTableCell(tableIframe, resolve);
     }, timer);
   }
+}
+
+function formatDate(date) {
+  return [
+    ("0" + date.getDate()).slice(-2),
+    ("0" + (date.getMonth() + 1)).slice(-2),
+    date.getFullYear()
+  ].join('.');
 }
 
 function getTimeInputAndSaveButton(resolve) {
@@ -319,6 +337,10 @@ function adjustTimeAndSave() {
 
 function leaveProcess(message) {
   $(timoIframe).off('load');
+  if (message && message.indexOf('error' == 0)) {
+    progressBar.animate(0);
+    console.log(message);
+  }
 
   $(loadingGif).fadeOut(2000);
   setTimeout(() => {
