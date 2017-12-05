@@ -337,7 +337,7 @@ function adjustTimeAndSave() {
 
 function leaveProcess(message) {
   $(timoIframe).off('load');
-  if (message && message.indexOf('error' == 0)) {
+  if (message && message.indexOf('error') == 0) {
     progressBar.animate(0);
     console.log(message);
   }
